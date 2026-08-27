@@ -3,11 +3,18 @@ API v1 Router aggregation.
 """
 
 from fastapi import APIRouter
-from app.api.v1.endpoints import health, transactions, analysis
+from app.api.v1.endpoints import (
+    health_router,
+    transactions_router,
+    analysis_router,
+    assessments_router,
+)
 
 api_v1_router = APIRouter()
+api_v1_router.include_router(health_router)
+api_v1_router.include_router(transactions_router)
+api_v1_router.include_router(analysis_router)
+api_v1_router.include_router(assessments_router)
 
-# Register endpoint routers
-api_v1_router.include_router(health.router, tags=["Health"])
-api_v1_router.include_router(transactions.router, tags=["Transactions"])
-api_v1_router.include_router(analysis.router, tags=["Analysis & Findings"])
+# Alias for compatibility
+api_router = api_v1_router

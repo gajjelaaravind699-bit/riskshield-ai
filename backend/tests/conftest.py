@@ -23,6 +23,7 @@ from app.models import (
     Finding,
     FindingEntity,
     FindingTransaction,
+    Assessment,
 )
 
 

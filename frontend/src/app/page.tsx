@@ -8,6 +8,8 @@ import { TransactionIngestForm } from "@/components/TransactionIngestForm";
 import { TransactionList } from "@/components/TransactionList";
 import { AnalysisControlCard } from "@/components/AnalysisControlCard";
 import { FindingsExplorer } from "@/components/FindingsExplorer";
+import { RiskAssessmentCard } from "@/components/RiskAssessmentCard";
+import { AssessmentExplorer } from "@/components/AssessmentExplorer";
 import {
   ShieldCheck,
   Radio,
@@ -17,11 +19,13 @@ import {
   Terminal,
   Database,
   Network,
+  Scale,
 } from "lucide-react";
 
 export default function Home() {
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
   const [findingsTrigger, setFindingsTrigger] = useState<number>(0);
+  const [assessmentTrigger, setAssessmentTrigger] = useState<number>(0);
 
   const handleTransactionIngested = () => {
     setRefreshTrigger((prev) => prev + 1);
@@ -29,6 +33,10 @@ export default function Home() {
 
   const handleAnalysisComplete = () => {
     setFindingsTrigger((prev) => prev + 1);
+  };
+
+  const handleAssessmentComplete = () => {
+    setAssessmentTrigger((prev) => prev + 1);
   };
 
   return (
@@ -42,9 +50,9 @@ export default function Home() {
           <div className="absolute bottom-0 left-0 -mb-8 -ml-8 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
 
           <div className="relative z-10 space-y-4 max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-medium">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
               <Radio className="w-3.5 h-3.5 animate-pulse" />
-              <span>Phase 3: Graph & Pattern Analysis Engine Active</span>
+              <span>Phase 4: Explainable Decision-Support & Risk Scoring Active</span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl font-extrabold text-zinc-100 tracking-tight">
@@ -56,8 +64,8 @@ export default function Home() {
 
             <p className="text-sm sm:text-base text-zinc-400 leading-relaxed">
               Detect coordinated payment abuse across dispersed accounts, devices, and payment
-              instruments. Evaluate multi-account entity sharing, velocity bursts, and failure sequences
-              with explainable evidence traces and deterministic rule-based pattern detectors.
+              instruments. Evaluate deterministic bounded risk scores, rule contribution breakdowns,
+              and auditable decision-support recommendations (<code className="text-emerald-400">ALLOW</code> / <code className="text-amber-400">REVIEW</code> / <code className="text-rose-400">BLOCK</code>).
             </p>
 
             <div className="flex flex-wrap gap-3 pt-2">
@@ -69,6 +77,14 @@ export default function Home() {
               >
                 <span>Interactive OpenAPI Docs</span>
                 <ArrowUpRight className="w-4 h-4" />
+              </a>
+
+              <a
+                href="#assessments"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 font-medium text-xs transition-all"
+              >
+                <Scale className="w-4 h-4 text-emerald-400" />
+                <span>Risk Assessments</span>
               </a>
 
               <a
@@ -86,14 +102,6 @@ export default function Home() {
                 <Database className="w-4 h-4 text-emerald-400" />
                 <span>Ingestion Feed</span>
               </a>
-
-              <a
-                href="#quickstart"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 font-medium text-xs transition-all"
-              >
-                <BookOpen className="w-4 h-4 text-zinc-400" />
-                <span>Quickstart Guide</span>
-              </a>
             </div>
           </div>
         </section>
@@ -101,6 +109,16 @@ export default function Home() {
         {/* Live Backend Health & Readiness Diagnostic */}
         <section>
           <HealthStatus />
+        </section>
+
+        {/* Phase 4: Risk Assessment Trigger Control */}
+        <section id="assessments">
+          <RiskAssessmentCard onAssessmentComplete={handleAssessmentComplete} />
+        </section>
+
+        {/* Phase 4: Explainable Assessments & Decision-Support Explorer */}
+        <section>
+          <AssessmentExplorer refreshTrigger={assessmentTrigger} />
         </section>
 
         {/* Phase 3: Graph & Pattern Analysis Trigger Control */}
@@ -174,9 +192,9 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <FileCode2 className="w-4 h-4 text-zinc-400" />
-            <span>RiskShield AI — Explainable Abuse-Ring Sentinel</span>
+            <span>RiskShield AI — Decision-Support Abuse-Ring Sentinel</span>
           </div>
-          <div>Graph Analysis & Findings Layer Active</div>
+          <div>Phase 4 Risk Scoring & Assessment Engine Active</div>
         </div>
       </footer>
     </div>

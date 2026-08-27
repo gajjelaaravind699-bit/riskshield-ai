@@ -11,6 +11,7 @@ from app.models.analysis_run import AnalysisRun, AnalysisRunStatus
 from app.models.finding import Finding, FindingType, FindingSeverity
 from app.models.finding_entity import FindingEntity
 from app.models.finding_transaction import FindingTransaction
+from app.models.assessment import Assessment, RiskLevel, Recommendation
 
 __all__ = [
     "Base",
@@ -27,4 +28,7 @@ __all__ = [
     "FindingSeverity",
     "FindingEntity",
     "FindingTransaction",
+    "Assessment",
+    "RiskLevel",
+    "Recommendation",
 ]

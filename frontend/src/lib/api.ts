@@ -29,6 +29,23 @@ export interface TransactionEntityRead {
   entity: EntityRead;
 }
 
+export interface TransactionSummaryRead {
+  id: number;
+  transaction_id: string;
+  customer_id: string;
+  amount: string;
+  currency: string;
+  status: string;
+  payment_method: string;
+  card_bin?: string | null;
+  card_last4?: string | null;
+  instrument_token?: string | null;
+  upi_vpa?: string | null;
+  device_id?: string | null;
+  ip_address?: string | null;
+  transacted_at: string;
+}
+
 export interface TransactionRead {
   id: number;
   transaction_id: string;
@@ -87,7 +104,7 @@ export interface FindingEntityRead {
 
 export interface FindingTransactionRead {
   id: number;
-  transaction: TransactionRead;
+  transaction: TransactionSummaryRead;
 }
 
 export interface FindingRead {
@@ -139,6 +156,75 @@ export interface AnalysisRunListResponse {
   total: number;
   page: number;
   page_size: number;
+}
+
+// Phase 4: Risk Scoring & Decision Support Types
+export interface RulesetConfigInput {
+  ruleset_version?: string;
+  shared_instrument_weight?: number;
+  shared_device_weight?: number;
+  shared_ip_weight?: number;
+  velocity_burst_weight?: number;
+  failure_burst_weight?: number;
+  base_score?: number;
+  max_score?: number;
+}
+
+export interface DecisionPolicyConfigInput {
+  decision_policy_version?: string;
+  review_threshold?: number;
+  block_threshold?: number;
+}
+
+export interface AssessmentEvaluationRequestInput {
+  ruleset?: RulesetConfigInput;
+  policy?: DecisionPolicyConfigInput;
+}
+
+export interface RuleContributionRead {
+  rule_name: string;
+  finding_type: string;
+  weight: number;
+  triggered: boolean;
+  points_contributed: number;
+  description: string;
+  finding_ids: string[];
+}
+
+export interface AssessmentRead {
+  id: number;
+  assessment_id: string;
+  transaction_id: number;
+  score: number;
+  risk_level: string;
+  recommendation: string;
+  explanation: string;
+  ruleset_version: string;
+  decision_policy_version: string;
+  rule_contributions: RuleContributionRead[];
+  evidence_summary: Record<string, unknown>;
+  action_executed: boolean;
+  action_disclaimer: string;
+  created_at: string;
+  transaction?: TransactionSummaryRead | null;
+}
+
+export interface AssessmentListResponse {
+  items: AssessmentRead[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface AssessmentBatchResponse {
+  total_evaluated: number;
+  allow_count: number;
+  review_count: number;
+  block_count: number;
+  ruleset_version: string;
+  decision_policy_version: string;
+  action_disclaimer: string;
+  items: AssessmentRead[];
 }
 
 const API_BASE_URL =
@@ -342,6 +428,128 @@ export async function getFindingById(findingId: string): Promise<FindingRead> {
 
   if (!response.ok) {
     throw new Error(`Failed to fetch finding '${findingId}' with status: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+// Phase 4: Risk Scoring & Decision-Support Methods
+
+/**
+ * Evaluate deterministic risk assessment for a single transaction.
+ */
+export async function evaluateTransaction(
+  transactionId: string,
+  payload?: AssessmentEvaluationRequestInput
+): Promise<AssessmentRead> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/assessments/evaluate/${encodeURIComponent(transactionId)}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload || {}),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: "Assessment evaluation failed" }));
+    throw new Error(errorData.detail || "Failed to evaluate transaction risk");
+  }
+
+  return response.json();
+}
+
+/**
+ * Evaluate deterministic risk assessments across all persisted transactions.
+ */
+export async function evaluateAllTransactions(
+  payload?: AssessmentEvaluationRequestInput
+): Promise<AssessmentBatchResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/assessments/evaluate-all`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload || {}),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: "Batch assessment evaluation failed" }));
+    throw new Error(errorData.detail || "Failed to execute batch risk assessment");
+  }
+
+  return response.json();
+}
+
+/**
+ * Retrieve paginated list of risk assessments with optional filters.
+ */
+export async function getAssessments(params?: {
+  skip?: number;
+  limit?: number;
+  recommendation?: string;
+  risk_level?: string;
+  customer_id?: string;
+  transaction_id?: string;
+}): Promise<AssessmentListResponse> {
+  const query = new URLSearchParams();
+  if (params?.skip !== undefined) query.set("skip", params.skip.toString());
+  if (params?.limit !== undefined) query.set("limit", params.limit.toString());
+  if (params?.recommendation) query.set("recommendation", params.recommendation);
+  if (params?.risk_level) query.set("risk_level", params.risk_level);
+  if (params?.customer_id) query.set("customer_id", params.customer_id);
+  if (params?.transaction_id) query.set("transaction_id", params.transaction_id);
+
+  const queryString = query.toString();
+  const url = `${API_BASE_URL}/api/v1/assessments${queryString ? `?${queryString}` : ""}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch assessments with status: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Retrieve a single assessment by ID.
+ */
+export async function getAssessmentById(assessmentId: string): Promise<AssessmentRead> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/assessments/${encodeURIComponent(assessmentId)}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch assessment '${assessmentId}' with status: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Retrieve assessment for a specific transaction ID.
+ */
+export async function getAssessmentByTransactionId(transactionId: string): Promise<AssessmentRead> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/assessments/transaction/${encodeURIComponent(transactionId)}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch assessment for transaction '${transactionId}' with status: ${response.status}`);
   }
 
   return response.json();
