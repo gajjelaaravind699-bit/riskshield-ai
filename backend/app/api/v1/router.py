@@ -3,10 +3,11 @@ API v1 Router aggregation.
 """
 
 from fastapi import APIRouter
-from app.api.v1.endpoints import health, transactions
+from app.api.v1.endpoints import health, transactions, analysis
 
 api_v1_router = APIRouter()
 
 # Register endpoint routers
 api_v1_router.include_router(health.router, tags=["Health"])
 api_v1_router.include_router(transactions.router, tags=["Transactions"])
+api_v1_router.include_router(analysis.router, tags=["Analysis & Findings"])

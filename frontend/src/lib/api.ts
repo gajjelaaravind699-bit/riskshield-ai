@@ -78,6 +78,69 @@ export interface TransactionListResponse {
   page_size: number;
 }
 
+// Phase 3: Graph & Pattern Analysis Types
+export interface FindingEntityRead {
+  id: number;
+  role: string;
+  entity: EntityRead;
+}
+
+export interface FindingTransactionRead {
+  id: number;
+  transaction: TransactionRead;
+}
+
+export interface FindingRead {
+  id: number;
+  finding_id: string;
+  analysis_run_id: number;
+  finding_type: string;
+  severity: string;
+  title: string;
+  explanation: string;
+  fingerprint: string;
+  evidence_payload: Record<string, unknown>;
+  created_at: string;
+  related_entities: FindingEntityRead[];
+  related_transactions: FindingTransactionRead[];
+}
+
+export interface FindingListResponse {
+  items: FindingRead[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface AnalysisConfigInput {
+  shared_instrument_threshold?: number;
+  shared_device_threshold?: number;
+  shared_ip_threshold?: number;
+  velocity_burst_count?: number;
+  velocity_window_minutes?: number;
+  failure_burst_count?: number;
+  failure_window_minutes?: number;
+}
+
+export interface AnalysisRunRead {
+  id: number;
+  run_id: string;
+  status: string;
+  total_transactions_analyzed: number;
+  findings_count: number;
+  config_hash: string;
+  completed_at?: string | null;
+  created_at: string;
+  findings: FindingRead[];
+}
+
+export interface AnalysisRunListResponse {
+  items: AnalysisRunRead[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -175,6 +238,110 @@ export async function getTransactionById(transactionId: string): Promise<Transac
 
   if (!response.ok) {
     throw new Error(`Failed to fetch transaction '${transactionId}' with status: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Trigger graph and pattern analysis execution.
+ */
+export async function triggerAnalysis(config?: AnalysisConfigInput): Promise<AnalysisRunRead> {
+  const body = config ? { config } : {};
+  const response = await fetch(`${API_BASE_URL}/api/v1/analysis/run`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: "Failed to trigger analysis" }));
+    throw new Error(errorData.detail || "Analysis trigger failed");
+  }
+
+  return response.json();
+}
+
+/**
+ * Retrieve paginated list of analysis execution runs.
+ */
+export async function getAnalysisRuns(params?: {
+  skip?: number;
+  limit?: number;
+}): Promise<AnalysisRunListResponse> {
+  const query = new URLSearchParams();
+  if (params?.skip !== undefined) query.set("skip", params.skip.toString());
+  if (params?.limit !== undefined) query.set("limit", params.limit.toString());
+
+  const queryString = query.toString();
+  const url = `${API_BASE_URL}/api/v1/analysis/runs${queryString ? `?${queryString}` : ""}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch analysis runs with status: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Retrieve paginated list of findings with optional filters.
+ */
+export async function getFindings(params?: {
+  skip?: number;
+  limit?: number;
+  finding_type?: string;
+  severity?: string;
+  run_id?: string;
+}): Promise<FindingListResponse> {
+  const query = new URLSearchParams();
+  if (params?.skip !== undefined) query.set("skip", params.skip.toString());
+  if (params?.limit !== undefined) query.set("limit", params.limit.toString());
+  if (params?.finding_type) query.set("finding_type", params.finding_type);
+  if (params?.severity) query.set("severity", params.severity);
+  if (params?.run_id) query.set("run_id", params.run_id);
+
+  const queryString = query.toString();
+  const url = `${API_BASE_URL}/api/v1/analysis/findings${queryString ? `?${queryString}` : ""}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch findings with status: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Retrieve a single finding by ID with full explainable evidence payload.
+ */
+export async function getFindingById(findingId: string): Promise<FindingRead> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/analysis/findings/${encodeURIComponent(findingId)}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch finding '${findingId}' with status: ${response.status}`);
   }
 
   return response.json();

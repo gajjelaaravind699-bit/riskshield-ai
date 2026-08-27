@@ -15,7 +15,15 @@ from sqlalchemy.pool import StaticPool
 from app.main import app
 from app.core.config import settings
 from app.core.database import Base, get_db
-from app.models import Transaction, Entity, TransactionEntity  # Ensure all models loaded
+from app.models import (
+    Transaction,
+    Entity,
+    TransactionEntity,
+    AnalysisRun,
+    Finding,
+    FindingEntity,
+    FindingTransaction,
+)
 
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"

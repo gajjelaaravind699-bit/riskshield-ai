@@ -12,6 +12,16 @@ from app.schemas.transaction import (
     EntityRead,
     TransactionEntityRead,
 )
+from app.schemas.analysis import (
+    AnalysisConfig,
+    AnalysisRunRequest,
+    FindingEntityRead,
+    FindingTransactionRead,
+    FindingRead,
+    FindingListResponse,
+    AnalysisRunRead,
+    AnalysisRunListResponse,
+)
 
 __all__ = [
     "HealthResponse",
@@ -23,4 +33,12 @@ __all__ = [
     "TransactionBatchResponse",
     "EntityRead",
     "TransactionEntityRead",
+    "AnalysisConfig",
+    "AnalysisRunRequest",
+    "FindingEntityRead",
+    "FindingTransactionRead",
+    "FindingRead",
+    "FindingListResponse",
+    "AnalysisRunRead",
+    "AnalysisRunListResponse",
 ]
