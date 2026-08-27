@@ -238,16 +238,28 @@ async def test_deterministic_idempotent_analysis(async_client: AsyncClient):
     assert res1.status_code == 201
     run1 = res1.json()
 
-    # Run 2
+    # Run 2 (identical data & configuration)
     res2 = await async_client.post("/api/v1/analysis/run")
     assert res2.status_code == 201
     run2 = res2.json()
 
-    # Both runs should yield the exact same finding types and fingerprints
+    # Both runs should yield the exact same finding count and fingerprints
+    assert run1["findings_count"] == 1
+    assert run2["findings_count"] == 1
+
     fps1 = [f["fingerprint"] for f in run1["findings"]]
     fps2 = [f["fingerprint"] for f in run2["findings"]]
     assert fps1 == fps2
     assert len(fps1) == 1
+
+    # CRITICAL IDEMPOTENCY CHECK:
+    # Query GET /api/v1/analysis/findings directly and verify NO duplicate rows exist in the DB!
+    findings_res = await async_client.get("/api/v1/analysis/findings")
+    assert findings_res.status_code == 200
+    findings_db = findings_res.json()
+    assert findings_db["total"] == 1, f"Expected exactly 1 unique finding in DB, but got {findings_db['total']}"
+    assert len(findings_db["items"]) == 1
+    assert findings_db["items"][0]["fingerprint"] == fps1[0]
 
 
 @pytest.mark.asyncio

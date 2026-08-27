@@ -28,7 +28,7 @@ class AnalysisService:
     ) -> AnalysisRun:
         """
         Execute deterministic pattern/graph analysis across all persisted transactions and entities.
-        Deduplicates candidate findings by deterministic content fingerprint.
+        Deduplicates candidate findings by deterministic content fingerprint both in-memory and against the database.
         """
         active_config = config or AnalysisConfig()
         config_hash = hashlib.sha256(
@@ -61,7 +61,7 @@ class AnalysisService:
 
         # Deduplicate candidate findings by deterministic fingerprint
         seen_fingerprints: Set[str] = set()
-        persisted_findings_count = 0
+        persisted_findings: List[Finding] = []
 
         for candidate in all_candidates:
             fp = candidate.compute_fingerprint()
@@ -69,41 +69,50 @@ class AnalysisService:
                 continue
             seen_fingerprints.add(fp)
 
-            finding_id = f"find_{uuid4().hex[:10]}"
-            finding = Finding(
-                finding_id=finding_id,
-                analysis_run_id=analysis_run.id,
-                finding_type=candidate.finding_type,
-                severity=candidate.severity,
-                title=candidate.title,
-                explanation=candidate.explanation,
-                fingerprint=fp,
-                evidence_payload=candidate.evidence_payload,
-            )
-            db.add(finding)
-            await db.flush()
+            # Check if this exact finding fingerprint already exists in the database
+            stmt = select(Finding).where(Finding.fingerprint == fp)
+            existing_finding = (await db.execute(stmt)).scalars().first()
 
-            # Attach entity links
-            for entity_id, role in candidate.related_entities:
-                fe = FindingEntity(
-                    finding_id=finding.id,
-                    entity_id=entity_id,
-                    role=role,
+            if existing_finding:
+                # Update run association to current execution
+                existing_finding.analysis_run_id = analysis_run.id
+                persisted_findings.append(existing_finding)
+            else:
+                finding_id = f"find_{uuid4().hex[:10]}"
+                finding = Finding(
+                    finding_id=finding_id,
+                    analysis_run_id=analysis_run.id,
+                    finding_type=candidate.finding_type,
+                    severity=candidate.severity,
+                    title=candidate.title,
+                    explanation=candidate.explanation,
+                    fingerprint=fp,
+                    evidence_payload=candidate.evidence_payload,
                 )
-                db.add(fe)
+                db.add(finding)
+                await db.flush()
 
-            # Attach transaction links
-            for tx_id in candidate.related_transaction_ids:
-                ft = FindingTransaction(
-                    finding_id=finding.id,
-                    transaction_id=tx_id,
-                )
-                db.add(ft)
+                # Attach entity links
+                for entity_id, role in candidate.related_entities:
+                    fe = FindingEntity(
+                        finding_id=finding.id,
+                        entity_id=entity_id,
+                        role=role,
+                    )
+                    db.add(fe)
 
-            persisted_findings_count += 1
+                # Attach transaction links
+                for tx_id in candidate.related_transaction_ids:
+                    ft = FindingTransaction(
+                        finding_id=finding.id,
+                        transaction_id=tx_id,
+                    )
+                    db.add(ft)
+
+                persisted_findings.append(finding)
 
         # Mark analysis run complete
-        analysis_run.findings_count = persisted_findings_count
+        analysis_run.findings_count = len(persisted_findings)
         analysis_run.status = AnalysisRunStatus.COMPLETED
         analysis_run.completed_at = datetime.now(timezone.utc)
         await db.flush()

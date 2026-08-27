@@ -1,11 +1,12 @@
 import React from "react";
 import {
-  GitFork,
+  Info,
   CheckCircle,
   Database,
   Network,
   Lock,
   Boxes,
+  Shield,
 } from "lucide-react";
 
 export const ArchitectureCard: React.FC = () => {
@@ -90,22 +91,16 @@ export const ArchitectureCard: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 space-y-3">
           <div className="flex items-center gap-2 text-zinc-100 font-semibold text-sm">
-            <GitFork className="w-4 h-4 text-emerald-400" />
-            <span>Decision Taxonomy</span>
+            <Shield className="w-4 h-4 text-amber-400" />
+            <span>Phase 4 Decision Support — Not Implemented</span>
           </div>
-          <div className="space-y-2 text-xs">
-            <div className="flex items-center justify-between p-2 rounded bg-zinc-950/50 border border-zinc-800/60">
-              <span className="font-mono text-emerald-400 font-semibold">ALLOW</span>
-              <span className="text-zinc-400">Normal velocity & legitimate entity traces</span>
-            </div>
-            <div className="flex items-center justify-between p-2 rounded bg-zinc-950/50 border border-zinc-800/60">
-              <span className="font-mono text-amber-400 font-semibold">REVIEW</span>
-              <span className="text-zinc-400">Borderline signals requiring analyst review</span>
-            </div>
-            <div className="flex items-center justify-between p-2 rounded bg-zinc-950/50 border border-zinc-800/60">
-              <span className="font-mono text-rose-400 font-semibold">BLOCK</span>
-              <span className="text-zinc-400">High-confidence coordinated abuse ring indicators</span>
-            </div>
+          <div className="p-3.5 rounded-lg bg-zinc-950/70 border border-zinc-800/80 space-y-2 text-xs text-zinc-400 leading-relaxed">
+            <p>
+              Autonomous decisioning actions (<code className="text-zinc-300 font-mono">ALLOW</code>, <code className="text-zinc-300 font-mono">REVIEW</code>, <code className="text-zinc-300 font-mono">BLOCK</code>) and automated transaction blocking are <strong className="text-amber-400 font-medium">not implemented</strong> in Phase 3.
+            </p>
+            <p>
+              The current system operates exclusively as an explainable relationship, graph correlation, and pattern anomaly sentinel providing evidence traces to support human analysts.
+            </p>
           </div>
         </div>
 

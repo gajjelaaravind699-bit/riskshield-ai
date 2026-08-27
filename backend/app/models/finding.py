@@ -4,7 +4,7 @@ Finding model representing an observed graph or pattern anomaly finding.
 
 from datetime import datetime, timezone
 from typing import Any, Dict, List, TYPE_CHECKING
-from sqlalchemy import DateTime, ForeignKey, JSON, String, Text
+from sqlalchemy import DateTime, ForeignKey, JSON, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
@@ -78,6 +78,7 @@ class Finding(Base):
     )
     fingerprint: Mapped[str] = mapped_column(
         String(64),
+        unique=True,
         nullable=False,
         index=True,
     )
@@ -108,6 +109,10 @@ class Finding(Base):
         back_populates="finding",
         cascade="all, delete-orphan",
         lazy="selectin",
+    )
+
+    __table_args__ = (
+        UniqueConstraint("fingerprint", name="uq_findings_fingerprint"),
     )
 
     def __repr__(self) -> str:
