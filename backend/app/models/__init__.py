@@ -1,7 +1,19 @@
 """
-SQLAlchemy ORM models package.
+Models package initialization.
 """
 
-from app.models.base import Base, TimestampMixin
+from app.core.database import Base
+from app.models.base import TimestampMixin
+from app.models.entity import Entity, EntityType
+from app.models.transaction_entity import TransactionEntity, RelationshipType
+from app.models.transaction import Transaction
 
-__all__ = ["Base", "TimestampMixin"]
+__all__ = [
+    "Base",
+    "TimestampMixin",
+    "Entity",
+    "EntityType",
+    "TransactionEntity",
+    "RelationshipType",
+    "Transaction",
+]

@@ -74,6 +74,8 @@ class Settings(BaseSettings):
         if self.DATABASE_URL:
             if self.DATABASE_URL.startswith("postgresql+asyncpg://"):
                 return self.DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://", 1)
+            if self.DATABASE_URL.startswith("sqlite+aiosqlite://"):
+                return self.DATABASE_URL.replace("sqlite+aiosqlite://", "sqlite://", 1)
             return self.DATABASE_URL
         return (
             f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"

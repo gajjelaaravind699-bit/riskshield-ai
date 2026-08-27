@@ -1,6 +1,11 @@
+"use client";
+
+import { useState } from "react";
 import { Header } from "@/components/Header";
 import { HealthStatus } from "@/components/HealthStatus";
 import { ArchitectureCard } from "@/components/ArchitectureCard";
+import { TransactionIngestForm } from "@/components/TransactionIngestForm";
+import { TransactionList } from "@/components/TransactionList";
 import {
   ShieldCheck,
   Radio,
@@ -8,9 +13,16 @@ import {
   BookOpen,
   ArrowUpRight,
   Terminal,
+  Database,
 } from "lucide-react";
 
 export default function Home() {
+  const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
+
+  const handleTransactionIngested = () => {
+    setRefreshTrigger((prev) => prev + 1);
+  };
+
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-zinc-950">
       <Header />
@@ -24,7 +36,7 @@ export default function Home() {
           <div className="relative z-10 space-y-4 max-w-3xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
               <Radio className="w-3.5 h-3.5 animate-pulse" />
-              <span>Sentinel Foundation Initialized</span>
+              <span>Phase 2: Ingestion & Normalized Entity Graph Ready</span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl font-extrabold text-zinc-100 tracking-tight">
@@ -36,8 +48,8 @@ export default function Home() {
 
             <p className="text-sm sm:text-base text-zinc-400 leading-relaxed">
               Detect coordinated payment abuse across dispersed accounts, devices, and payment
-              instruments. RiskShield AI identifies suspicious transaction rings and produces
-              explainable risk scores and recommendation vectors.
+              instruments. Ingest payment events with zero-trust tokenization, normalized entity
+              relationship persistence, and decision-support audit traces.
             </p>
 
             <div className="flex flex-wrap gap-3 pt-2">
@@ -49,6 +61,14 @@ export default function Home() {
               >
                 <span>Interactive OpenAPI Docs</span>
                 <ArrowUpRight className="w-4 h-4" />
+              </a>
+
+              <a
+                href="#ingest"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 font-medium text-xs transition-all"
+              >
+                <Database className="w-4 h-4 text-emerald-400" />
+                <span>Ingestion Feed</span>
               </a>
 
               <a
@@ -65,6 +85,16 @@ export default function Home() {
         {/* Live Backend Health & Readiness Diagnostic */}
         <section>
           <HealthStatus />
+        </section>
+
+        {/* Phase 2: Transaction Ingestion Form */}
+        <section id="ingest">
+          <TransactionIngestForm onTransactionIngested={handleTransactionIngested} />
+        </section>
+
+        {/* Phase 2: Live Transaction List & Normalized Entity Explorer */}
+        <section>
+          <TransactionList refreshTrigger={refreshTrigger} />
         </section>
 
         {/* System Architecture & Foundation Overview */}
@@ -118,9 +148,9 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <FileCode2 className="w-4 h-4 text-zinc-400" />
-            <span>RiskShield AI Foundation — Production Architecture Ready</span>
+            <span>RiskShield AI — Decision Support Abuse-Ring Sentinel</span>
           </div>
-          <div>Decision-Support System Sentinel</div>
+          <div>Normalized Entity Graph & Ingestion API Ready</div>
         </div>
       </footer>
     </div>
