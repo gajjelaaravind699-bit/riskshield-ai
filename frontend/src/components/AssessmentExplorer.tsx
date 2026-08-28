@@ -10,9 +10,6 @@ import {
   CheckCircle2,
   AlertTriangle,
   XCircle,
-  FileCode2,
-  Info,
-  Layers,
   Scale,
   Lock,
   Briefcase,
@@ -57,8 +54,31 @@ export function AssessmentExplorer({ refreshTrigger = 0, onCaseCreated }: Assess
   }, [recFilter, riskLevelFilter]);
 
   useEffect(() => {
-    fetchAssessmentsList();
-  }, [fetchAssessmentsList, refreshTrigger]);
+    let ignore = false;
+    getAssessments({
+      recommendation: recFilter || undefined,
+      risk_level: riskLevelFilter || undefined,
+      limit: 50,
+    })
+      .then((data) => {
+        if (!ignore) {
+          setAssessments(data.items);
+          setTotal(data.total);
+          setLoading(false);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!ignore) {
+          setError(
+            err instanceof Error ? err.message : "Failed to fetch risk assessments."
+          );
+          setLoading(false);
+        }
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [recFilter, riskLevelFilter, refreshTrigger]);
 
   const handleInspect = async (assessmentId: string) => {
     setInspectLoading(true);

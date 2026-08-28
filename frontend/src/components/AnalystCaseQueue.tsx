@@ -8,15 +8,7 @@ import {
   RefreshCw,
   Plus,
   Filter,
-  UserCheck,
-  Clock,
-  CheckCircle2,
-  AlertTriangle,
-  FileCode2,
-  Lock,
   ChevronRight,
-  Shield,
-  Layers,
 } from "lucide-react";
 
 interface AnalystCaseQueueProps {
@@ -63,8 +55,29 @@ export function AnalystCaseQueue({ refreshTrigger = 0 }: AnalystCaseQueueProps) 
   }, [statusTab, priorityFilter]);
 
   useEffect(() => {
-    fetchCasesList();
-  }, [fetchCasesList, refreshTrigger]);
+    let ignore = false;
+    getCases({
+      status: statusTab || undefined,
+      priority: priorityFilter || undefined,
+      limit: 50,
+    })
+      .then((data) => {
+        if (!ignore) {
+          setCases(data.items);
+          setTotal(data.total);
+          setLoading(false);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!ignore) {
+          setError(err instanceof Error ? err.message : "Failed to load case queue");
+          setLoading(false);
+        }
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [statusTab, priorityFilter, refreshTrigger]);
 
   const handleCreateCaseSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,7 +156,7 @@ export function AnalystCaseQueue({ refreshTrigger = 0 }: AnalystCaseQueueProps) 
               Analyst Investigation & Case Review Queue
             </h3>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              Phase 5
+              {total} Cases
             </span>
           </div>
           <p className="text-xs text-zinc-400">

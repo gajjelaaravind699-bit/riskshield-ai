@@ -34,7 +34,25 @@ export const HealthStatus: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchHealth();
+    let ignore = false;
+    getHealthStatus(false)
+      .then((data) => {
+        if (!ignore) {
+          setHealth(data);
+          setLastChecked(new Date());
+          setLoading(false);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!ignore) {
+          setError(err instanceof Error ? err.message : "Failed to connect to backend");
+          setHealth(null);
+          setLoading(false);
+        }
+      });
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   return (

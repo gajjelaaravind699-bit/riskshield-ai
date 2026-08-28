@@ -13,14 +13,9 @@ import {
   XCircle,
   Clock,
   Eye,
-  CreditCard,
-  Smartphone,
-  Globe,
-  User,
   Shield,
   Layers,
   X,
-  Calendar,
 } from "lucide-react";
 
 interface TransactionListProps {
@@ -59,8 +54,31 @@ export function TransactionList({ refreshTrigger = 0 }: TransactionListProps) {
   }, [customerFilter, statusFilter]);
 
   useEffect(() => {
-    fetchTransactionsList();
-  }, [fetchTransactionsList, refreshTrigger]);
+    let ignore = false;
+    getTransactions({
+      customer_id: customerFilter.trim() || undefined,
+      status: statusFilter.trim() || undefined,
+      limit: 50,
+    })
+      .then((data) => {
+        if (!ignore) {
+          setTransactions(data.items);
+          setTotal(data.total);
+          setLoading(false);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!ignore) {
+          setError(
+            err instanceof Error ? err.message : "Failed to load transactions."
+          );
+          setLoading(false);
+        }
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [customerFilter, statusFilter, refreshTrigger]);
 
   const handleInspect = async (transactionId: string) => {
     setInspectLoading(true);

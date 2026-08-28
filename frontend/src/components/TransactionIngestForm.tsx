@@ -13,7 +13,6 @@ import {
   PlusCircle,
   CreditCard,
   Smartphone,
-  Globe,
   Loader2,
   Lock,
 } from "lucide-react";

@@ -12,7 +12,6 @@ import {
   HelpCircle,
   XCircle,
   FileText,
-  Info,
 } from "lucide-react";
 
 interface RiskAssessmentCardProps {

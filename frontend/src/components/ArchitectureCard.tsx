@@ -5,9 +5,7 @@ import {
   Network,
   Lock,
   Boxes,
-  ShieldCheck,
   Briefcase,
-  Scale,
 } from "lucide-react";
 
 export const ArchitectureCard: React.FC = () => {

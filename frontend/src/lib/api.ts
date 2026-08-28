@@ -324,15 +324,28 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 /**
+ * Build request headers with optional API Key authentication for backend RBAC.
+ */
+export function getAuthHeaders(customHeaders?: Record<string, string>): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...customHeaders,
+  };
+  const apiKey = process.env.NEXT_PUBLIC_API_KEY || "rs_analyst_key_dev";
+  if (apiKey && !headers["X-API-Key"]) {
+    headers["X-API-Key"] = apiKey;
+  }
+  return headers;
+}
+
+/**
  * Fetch health status from backend API.
  */
 export async function getHealthStatus(checkDb: boolean = false): Promise<HealthResponse> {
   const url = `${API_BASE_URL}/api/v1/health${checkDb ? "?check_db=true" : ""}`;
   const response = await fetch(url, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
 
@@ -349,9 +362,7 @@ export async function getHealthStatus(checkDb: boolean = false): Promise<HealthR
 export async function createTransaction(data: TransactionCreateInput): Promise<TransactionRead> {
   const response = await fetch(`${API_BASE_URL}/api/v1/transactions`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
 
@@ -390,9 +401,7 @@ export async function getTransactions(params?: {
 
   const response = await fetch(url, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
 
@@ -409,9 +418,7 @@ export async function getTransactions(params?: {
 export async function getTransactionById(transactionId: string): Promise<TransactionRead> {
   const response = await fetch(`${API_BASE_URL}/api/v1/transactions/${encodeURIComponent(transactionId)}`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
 
@@ -429,9 +436,7 @@ export async function triggerAnalysis(config?: AnalysisConfigInput): Promise<Ana
   const body = config ? { config } : {};
   const response = await fetch(`${API_BASE_URL}/api/v1/analysis/run`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(body),
   });
 
@@ -459,9 +464,7 @@ export async function getAnalysisRuns(params?: {
 
   const response = await fetch(url, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
 
@@ -494,9 +497,7 @@ export async function getFindings(params?: {
 
   const response = await fetch(url, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
 
@@ -513,9 +514,7 @@ export async function getFindings(params?: {
 export async function getFindingById(findingId: string): Promise<FindingRead> {
   const response = await fetch(`${API_BASE_URL}/api/v1/analysis/findings/${encodeURIComponent(findingId)}`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
 
@@ -537,9 +536,7 @@ export async function evaluateTransaction(
 ): Promise<AssessmentRead> {
   const response = await fetch(`${API_BASE_URL}/api/v1/assessments/evaluate/${encodeURIComponent(transactionId)}`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(payload || {}),
   });
 
@@ -559,9 +556,7 @@ export async function evaluateAllTransactions(
 ): Promise<AssessmentBatchResponse> {
   const response = await fetch(`${API_BASE_URL}/api/v1/assessments/evaluate-all`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(payload || {}),
   });
 
@@ -597,9 +592,7 @@ export async function getAssessments(params?: {
 
   const response = await fetch(url, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
 
@@ -616,9 +609,7 @@ export async function getAssessments(params?: {
 export async function getAssessmentById(assessmentId: string): Promise<AssessmentRead> {
   const response = await fetch(`${API_BASE_URL}/api/v1/assessments/${encodeURIComponent(assessmentId)}`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
 
@@ -635,9 +626,7 @@ export async function getAssessmentById(assessmentId: string): Promise<Assessmen
 export async function getAssessmentByTransactionId(transactionId: string): Promise<AssessmentRead> {
   const response = await fetch(`${API_BASE_URL}/api/v1/assessments/transaction/${encodeURIComponent(transactionId)}`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
 
@@ -656,9 +645,7 @@ export async function getAssessmentByTransactionId(transactionId: string): Promi
 export async function createCase(payload: CaseCreateInput): Promise<CaseRead> {
   const response = await fetch(`${API_BASE_URL}/api/v1/cases`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
 
@@ -679,9 +666,7 @@ export async function createCaseFromAssessment(
 ): Promise<CaseRead> {
   const response = await fetch(`${API_BASE_URL}/api/v1/cases/from-assessment/${encodeURIComponent(assessmentId)}`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(payload || {}),
   });
 
@@ -719,9 +704,7 @@ export async function getCases(params?: {
 
   const response = await fetch(url, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
 
@@ -738,9 +721,7 @@ export async function getCases(params?: {
 export async function getCaseById(caseId: string): Promise<CaseRead> {
   const response = await fetch(`${API_BASE_URL}/api/v1/cases/${encodeURIComponent(caseId)}`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
 
@@ -757,9 +738,7 @@ export async function getCaseById(caseId: string): Promise<CaseRead> {
 export async function updateCaseStatus(caseId: string, payload: CaseStatusUpdateInput): Promise<CaseRead> {
   const response = await fetch(`${API_BASE_URL}/api/v1/cases/${encodeURIComponent(caseId)}/status`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
 
@@ -777,9 +756,7 @@ export async function updateCaseStatus(caseId: string, payload: CaseStatusUpdate
 export async function updateCaseAssignment(caseId: string, payload: CaseAssignmentUpdateInput): Promise<CaseRead> {
   const response = await fetch(`${API_BASE_URL}/api/v1/cases/${encodeURIComponent(caseId)}/assignment`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
 
@@ -797,9 +774,7 @@ export async function updateCaseAssignment(caseId: string, payload: CaseAssignme
 export async function updateCasePriority(caseId: string, payload: CasePriorityUpdateInput): Promise<CaseRead> {
   const response = await fetch(`${API_BASE_URL}/api/v1/cases/${encodeURIComponent(caseId)}/priority`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
 
@@ -817,9 +792,7 @@ export async function updateCasePriority(caseId: string, payload: CasePriorityUp
 export async function addCaseNote(caseId: string, payload: CaseNoteCreateInput): Promise<CaseNoteRead> {
   const response = await fetch(`${API_BASE_URL}/api/v1/cases/${encodeURIComponent(caseId)}/notes`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
 
@@ -837,9 +810,7 @@ export async function addCaseNote(caseId: string, payload: CaseNoteCreateInput):
 export async function recordCaseDisposition(caseId: string, payload: CaseDispositionCreateInput): Promise<CaseRead> {
   const response = await fetch(`${API_BASE_URL}/api/v1/cases/${encodeURIComponent(caseId)}/disposition`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
 

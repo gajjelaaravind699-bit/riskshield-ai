@@ -13,9 +13,6 @@ import {
   Zap,
   AlertTriangle,
   Info,
-  Layers,
-  Calendar,
-  User,
 } from "lucide-react";
 
 interface FindingsExplorerProps {
@@ -54,8 +51,31 @@ export function FindingsExplorer({ refreshTrigger = 0 }: FindingsExplorerProps) 
   }, [typeFilter, severityFilter]);
 
   useEffect(() => {
-    fetchFindingsList();
-  }, [fetchFindingsList, refreshTrigger]);
+    let ignore = false;
+    getFindings({
+      finding_type: typeFilter || undefined,
+      severity: severityFilter || undefined,
+      limit: 50,
+    })
+      .then((data) => {
+        if (!ignore) {
+          setFindings(data.items);
+          setTotal(data.total);
+          setLoading(false);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!ignore) {
+          setError(
+            err instanceof Error ? err.message : "Failed to fetch findings."
+          );
+          setLoading(false);
+        }
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [typeFilter, severityFilter, refreshTrigger]);
 
   const handleInspect = async (findingId: string) => {
     setInspectLoading(true);

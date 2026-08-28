@@ -15,7 +15,6 @@ import {
   ShieldCheck,
   Radio,
   FileCode2,
-  BookOpen,
   ArrowUpRight,
   Terminal,
   Database,
