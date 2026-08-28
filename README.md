@@ -16,6 +16,53 @@ Operating strictly as a **decision-support platform**, RiskShield AI produces bo
 
 **Solution:** RiskShield AI correlates these relationships, detects explainable behavioral patterns, produces deterministic risk recommendations, and provides an auditable analyst case-review workflow.
 
+## 📐 Architecture Pipeline
+
+```mermaid
+flowchart TD
+    subgraph Ingestion ["1. Ingestion & Tokenization"]
+        TX[Payment Transaction Ingestion] --> |Zero-Trust Validation| NORM[Entity Normalization & Safe References]
+    end
+
+    subgraph Graph ["2. Entity Graph Resolution"]
+        NORM --> GRAPH[(Entity Graph<br/>Users • Devices • IPs • Cards)]
+    end
+
+    subgraph Detection ["3. Pattern Analysis Engine"]
+        GRAPH --> DET[Deterministic Cluster Detectors<br/>Shared Cards • Shared Devices • IP Clusters • Velocity Spikes • Failure Bursts]
+    end
+
+    subgraph Assessment ["4. Decision Support Engine"]
+        DET --> SCORE[Bounded Risk Scoring: 0–100<br/>Rule Contribution Breakdown]
+        SCORE --> REC[Advisory Recommendations<br/>ALLOW • REVIEW • BLOCK]
+    end
+
+    subgraph CaseManagement ["5. Human-in-the-Loop Case Review"]
+        REC --> CASE[Analyst Case Queue & State Machine<br/>NEW ➔ IN_REVIEW ➔ CLOSED]
+        CASE --> DISP[Analyst Dispositions<br/>CONFIRMED_SUSPICIOUS • FALSE_POSITIVE • ESCALATED]
+    end
+
+    subgraph Audit ["6. Compliance & Auditing"]
+        DISP --> AUDIT[(Immutable Forensic Audit Trail)]
+    end
+
+    subgraph Guardrail ["🛡️ Critical System Guardrail"]
+        SAFETY["Decision-Support Only: Zero automated financial actions, debits, or payment settlements executed."]
+    end
+
+    REC -.-> Guardrail
+```
+
+## 📸 Demo / Screenshots
+
+| Main Dashboard | Transaction Ingestion & Explorer |
+| :---: | :---: |
+| ![Main Dashboard](screenshots/dashboard.png)<br/>*Sentinel overview with real-time health checks, pipeline status, and operational metrics* | ![Transaction Ingestion & Explorer](screenshots/transaction-explorer.png)<br/>*Zero-trust transaction ingestion form and persisted transaction explorer with normalized entity relationships* |
+
+| Graph / Pattern Findings | Risk Assessment & Analyst Case Review |
+| :---: | :---: |
+| ![Graph/Pattern Findings](screenshots/findings.png)<br/>*Deterministic relationship-pattern findings, evidence, and explainable analysis results* | ![Risk Assessment & Analyst Case Review](screenshots/risk-assessment-case-review.png)<br/>*Explainable risk score breakdowns, policy recommendations, and human analyst investigation modal* |
+
 ### Core Capabilities
 1. **Zero-Trust Ingestion & Graph Resolution (Phase 2)**: Validates and stores safe payment-instrument references while rejecting raw PANs and CVVs.
 2. **Graph & Pattern Analysis Engine (Phase 3)**: 5 deterministic detectors identifying shared cards, shared devices, IP clusters, velocity spikes, and rapid failure bursts.
