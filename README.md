@@ -1,6 +1,6 @@
 # RiskShield AI — Abuse-Ring Sentinel
 
-> **Enterprise coordinated payment abuse detection & decision-support platform (Production Hardened)**
+> **Explainable payment-abuse detection and decision-support platform built with FastAPI, PostgreSQL, and Next.js.**
 
 ---
 
@@ -10,8 +10,14 @@
 
 Operating strictly as a **decision-support platform**, RiskShield AI produces bounded explainable risk assessments, transparent evidence signals, and recommendations without executing autonomous financial debits or payment settlements.
 
+## Problem & Solution
+
+**Problem:** Payment-abuse rings can distribute activity across multiple accounts, devices, IP addresses, and payment instruments, making account-level controls less effective.
+
+**Solution:** RiskShield AI correlates these relationships, detects explainable behavioral patterns, produces deterministic risk recommendations, and provides an auditable analyst case-review workflow.
+
 ### Core Capabilities
-1. **Zero-Trust Ingestion & Graph Resolution (Phase 2)**: Normalizes customer, payment instrument, device, and network entities with raw PAN masking and SHA-256 token hashing.
+1. **Zero-Trust Ingestion & Graph Resolution (Phase 2)**: Validates and stores safe payment-instrument references while rejecting raw PANs and CVVs.
 2. **Graph & Pattern Analysis Engine (Phase 3)**: 5 deterministic detectors identifying shared cards, shared devices, IP clusters, velocity spikes, and rapid failure bursts.
 3. **Deterministic Bounded Risk Scoring (Phase 4)**: Evaluates 0–100 risk scores with rule contribution breakdowns and versioned decision policy recommendations (`ALLOW`, `REVIEW`, `BLOCK`).
 4. **Human Analyst Case Management & Audit Trails (Phase 5)**: State machine case lifecycle (`NEW` &rarr; `ASSIGNED` &rarr; `IN_REVIEW` &rarr; `CLOSED`), append-only notes, and review dispositions (`CONFIRMED_SUSPICIOUS`, `FALSE_POSITIVE`, `NO_ACTION`, `ESCALATED`).
@@ -123,7 +129,7 @@ Run the complete backend automated test suite:
 ```bash
 cd backend
 pytest -v
-# 44/44 tests passed (100% pass rate)
+# Automated backend test suite covering ingestion, graph analysis, risk assessment, analyst case management, and security/reliability.
 ```
 
 Run frontend build & lint:
