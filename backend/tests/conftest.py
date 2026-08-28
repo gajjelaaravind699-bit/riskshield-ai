@@ -24,6 +24,9 @@ from app.models import (
     FindingEntity,
     FindingTransaction,
     Assessment,
+    Case,
+    CaseNote,
+    CaseAuditEvent,
 )
 
 

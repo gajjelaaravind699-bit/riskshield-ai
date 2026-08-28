@@ -1,14 +1,14 @@
 # RiskShield AI — System Architecture
 
-This document describes the initial architectural design and component structure for **RiskShield AI (Abuse-Ring Sentinel)**.
+This document describes the architectural design and component structure for **RiskShield AI (Abuse-Ring Sentinel)** across all 5 production phases.
 
 ---
 
 ## 1. System Vision & Purpose
 
-RiskShield AI is a specialized intelligence and decision-support system designed to identify, analyze, and mitigate coordinated payment abuse. Organized fraud groups often distribute transactions across multiple synthetic accounts, rotating cards, IP addresses, and device fingerprints to evade per-account velocity limits.
+RiskShield AI is a specialized intelligence and decision-support platform designed to identify, analyze, and mitigate coordinated payment abuse. Organized fraud groups distribute transactions across multiple synthetic accounts, rotating cards, IP addresses, and device fingerprints to evade per-account velocity limits.
 
-RiskShield AI correlates these dispersed signals across transactions to isolate suspicious clusters and deliver actionable recommendations (`ALLOW`, `REVIEW`, `BLOCK`) with explainable evidence.
+RiskShield AI correlates dispersed signals across transactions to isolate suspicious abuse rings, evaluate deterministic bounded risk scores, produce actionable recommendations (`ALLOW`, `REVIEW`, `BLOCK`), and enable human compliance analysts to investigate cases with append-only notes and immutable audit event trails.
 
 ---
 
@@ -16,40 +16,53 @@ RiskShield AI correlates these dispersed signals across transactions to isolate 
 
 ```mermaid
 graph TD
-    subgraph Client Layer
-        WebConsole["RiskShield Web Console\n(Next.js + TypeScript)"]
-        ExternalAPI["Payment / Ingestion Webhook\n(Future Gateway Integration)"]
+    subgraph Client Layer (Frontend)
+        WebConsole["RiskShield Web Console\n(Next.js 15+ + TypeScript)"]
+        CaseQueue["Analyst Case Review Queue\n(Phase 5)"]
+        AssessmentExp["Risk Assessment Explorer\n(Phase 4)"]
+        FindingsExp["Graph Findings Explorer\n(Phase 3)"]
+        IngestionUI["Transaction Ingest UI\n(Phase 2)"]
     end
 
-    subgraph API & Gateway Layer
-        FastAPI["RiskShield Backend Gateway\n(Python / FastAPI)"]
+    subgraph API & Gateway Layer (FastAPI)
+        FastAPI["RiskShield Backend Gateway\n(/api/v1)"]
         HealthRouter["Health & Readiness API\n(/api/v1/health)"]
-        V1Router["API v1 Aggregator"]
+        TxRouter["Transactions API\n(/api/v1/transactions)"]
+        AnalysisRouter["Analysis API\n(/api/v1/analysis)"]
+        AssessmentRouter["Assessments API\n(/api/v1/assessments)"]
+        CasesRouter["Analyst Cases API\n(/api/v1/cases)"]
     end
 
-    subgraph Core Engine Layer
-        SignalExtractor["Signal Extraction Service\n(Entity & Velocity Correlator)"]
-        ClusterEngine["Cluster Analysis Engine\n(Abuse Ring Graph Detector)"]
-        DecisionSupport["Decision Support Engine\n(ALLOW / REVIEW / BLOCK)"]
-        AuditService["Audit & Explanation Service"]
+    subgraph Engine & Service Layer
+        TxService["Transaction Ingestion Service\n(Entity Normalization & Hashing)"]
+        AnalysisService["Graph & Ring Analysis Engine\n(5 Deterministic Detectors)"]
+        AssessmentService["Risk Scoring & Decision Engine\n(Additive Point Model & Advisory Recs)"]
+        CaseService["Analyst Case Management Service\n(State Machine, Notes & Audit Trails)"]
     end
 
-    subgraph Storage & Persistence Layer
-        PostgreSQL[("PostgreSQL\nRelational DB & Audit Store")]
-        GraphStore[("Graph / Relationship Index\n(Entity Links)")]
+    subgraph Persistence & Audit Layer (PostgreSQL)
+        PostgreSQL[("PostgreSQL 16\n(Async SQLAlchemy 2.0 + Alembic)")]
+        TblTransactions[("transactions & entities")]
+        TblFindings[("analysis_runs, findings, finding_entities")]
+        TblAssessments[("assessments & rule_contributions")]
+        TblCases[("cases, case_notes, case_audit_events")]
     end
 
-    WebConsole -->|HTTP / JSON| FastAPI
-    ExternalAPI -.->|Ingest Events| FastAPI
-    FastAPI --> HealthRouter
-    FastAPI --> V1Router
-    V1Router --> SignalExtractor
-    SignalExtractor --> ClusterEngine
-    ClusterEngine --> DecisionSupport
-    DecisionSupport --> AuditService
-    AuditService --> PostgreSQL
-    ClusterEngine -.-> GraphStore
-    PostgreSQL -.-> HealthRouter
+    WebConsole --> CaseQueue & AssessmentExp & FindingsExp & IngestionUI
+    CaseQueue & AssessmentExp & FindingsExp & IngestionUI -->|HTTP / JSON| FastAPI
+    FastAPI --> HealthRouter & TxRouter & AnalysisRouter & AssessmentRouter & CasesRouter
+
+    TxRouter --> TxService
+    AnalysisRouter --> AnalysisService
+    AssessmentRouter --> AssessmentService
+    CasesRouter --> CaseService
+
+    TxService --> TblTransactions
+    AnalysisService --> TblFindings
+    AssessmentService --> TblAssessments
+    CaseService --> TblCases
+
+    TblTransactions & TblFindings & TblAssessments & TblCases --- PostgreSQL
 ```
 
 ---
@@ -57,57 +70,70 @@ graph TD
 ## 3. Layered Design
 
 ### 3.1 Presentation Layer (Frontend)
-- **Framework**: Next.js (App Router), React, TypeScript.
-- **Role**: Operational console for risk analysts and compliance officers.
-- **Responsibilities**:
-  - Live system status and connectivity monitoring.
-  - Visualization of flagged transaction clusters and risk scores (future phase).
-  - Review workflows for analyst decision overrides (future phase).
+- **Framework**: Next.js 15+ (App Router), React 19, TypeScript, Tailwind CSS, Lucide React.
+- **Role**: Operations console for risk analysts and compliance officers.
+- **Key Modules**:
+  - **Transaction Ingest & Live Explorer (Phase 2)**: Real-time transaction submission and normalized entity relationships.
+  - **Graph & Pattern Analysis Explorer (Phase 3)**: Interactive view of abuse-ring findings, shared instrument/device clusters, and velocity bursts.
+  - **Risk Assessment Explorer (Phase 4)**: Audit trace modal with point contribution breakdowns and advisory recommendations (`ALLOW`, `REVIEW`, `BLOCK`).
+  - **Analyst Case Review Queue (Phase 5)**: Comprehensive case management interface supporting status transitions, priority updates, analyst assignment, append-only notes, review dispositions, and immutable audit event timelines.
 
 ### 3.2 Ingestion & API Layer (Backend)
-- **Framework**: Python 3.11+, FastAPI, Pydantic v2.
-- **Role**: Secure API gateway and request lifecycle orchestrator.
-- **Responsibilities**:
-  - Expose versioned REST endpoints (`/api/v1/*`).
-  - System health checks (`/api/v1/health`) with runtime diagnostics.
-  - Request validation and serialization via Pydantic.
-  - CORS handling, configuration loading, and dependency injection.
+- **Framework**: Python 3.11+, FastAPI, Pydantic v2, Uvicorn.
+- **Role**: Secure API gateway, request validation, and orchestrator.
+- **Endpoints**:
+  - `GET /api/v1/health`: System health and optional database probe.
+  - `POST /api/v1/transactions`: Single & batch transaction ingestion with card PAN masking/hashing and entity normalization.
+  - `GET /api/v1/transactions`: Filtered and paginated transaction queries.
+  - `POST /api/v1/analysis/run`: Deterministic graph and pattern analysis execution.
+  - `GET /api/v1/analysis/findings`: Filtered detection findings.
+  - `POST /api/v1/assessments/evaluate/{transaction_id}`: Deterministic risk scoring and advisory decision generation.
+  - `GET /api/v1/assessments`: Paginated assessment queries.
+  - `POST /api/v1/cases`: Case creation (manually or escalated from assessment).
+  - `GET /api/v1/cases`: Case queue with status, priority, and disposition filtering.
+  - `PATCH /api/v1/cases/{case_id}/status`: Controlled state machine transition.
+  - `PATCH /api/v1/cases/{case_id}/assignment`: Reassign case to analyst.
+  - `PATCH /api/v1/cases/{case_id}/priority`: Update case priority.
+  - `POST /api/v1/cases/{case_id}/notes`: Add append-only note.
+  - `POST /api/v1/cases/{case_id}/disposition`: Record final analyst review disposition.
 
-### 3.3 Business Logic & Service Layer (Future Phases)
-- **Signal Correlator**: Extracts behavioral, network, and instrument relationship signals.
-- **Ring Sentinel / Clustering Engine**: Links transactions based on shared identities, cards, IPs, device tokens, and burst timing.
-- **Decision Support Engine**: Computes normalized risk scores and determines recommendations:
-  - `ALLOW` (Low Risk): No ring linkages, normal velocity.
-  - `REVIEW` (Medium Risk / Borderline): Ambiguous signals requiring manual review.
-  - `BLOCK` (High Risk): Strong ring indicators, multi-account device collusions, or high-risk entity overlap.
-- **Audit Logger**: Immutably records every evaluation, confidence level, timestamp, and triggering signals.
+### 3.3 Engine & Service Layer
+- **Transaction Ingestion**: Normalizes entities (Cards, VPAs, IPs, Devices) and prevents raw PAN exposure.
+- **Analysis Engine**: 5 deterministic detectors:
+  1. `SHARED_PAYMENT_INSTRUMENT`: Cross-customer card/VPA sharing.
+  2. `SHARED_DEVICE`: Cross-account device collisions.
+  3. `SHARED_IP_CLUSTER`: Dispersed account subnet clustering.
+  4. `VELOCITY_BURST`: High-frequency transaction spikes.
+  5. `RAPID_FAILURE_BURST`: Authorization testing attack patterns.
+- **Risk Scoring & Decision Engine**:
+  - Deterministic additive point model bounded between 0 and 100.
+  - Policy evaluation mapping scores to advisory recommendations:
+    - Score < 30 &rarr; `ALLOW` (Low Risk)
+    - 30 &le; Score < 60 &rarr; `REVIEW` (Medium Risk)
+    - Score &ge; 60 &rarr; `BLOCK` (High/Critical Risk)
+- **Case Management Engine**:
+  - State machine lifecycle: `NEW` &rarr; `ASSIGNED` &rarr; `IN_REVIEW` &rarr; `PENDING_INFO` &rarr; `CLOSED` &rarr; `ARCHIVED`.
+  - Dispositions: `NO_ACTION`, `FALSE_POSITIVE`, `CONFIRMED_SUSPICIOUS`, `ESCALATED`.
+  - Append-only notes and immutable audit event ledger.
 
-### 3.4 Data & Persistence Layer
-- **PostgreSQL**: Stores relational models, transaction entities, audit logs, and risk decisions.
-- **Async Database Connection**: Managed through SQLAlchemy with connection pooling and async engine execution (`asyncpg`).
+### 3.4 Persistence & Migration Layer
+- **PostgreSQL 16**: Relational storage managed with async SQLAlchemy 2.0 and `asyncpg`.
+- **Alembic Revisions**:
+  - `001_phase2_schema`: Transactions and entities.
+  - `002_phase3_schema`: Analysis runs and findings.
+  - `003_unique_finding_fingerprint`: Finding deduplication.
+  - `004_phase4_assessments`: Risk assessments and rule contributions.
+  - `005_phase5_case_management`: Cases, case notes, and case audit events.
 
 ---
 
-## 4. Core Signals Matrix
+## 4. Architectural Guardrails & Non-Action Guarantee
 
-| Signal Category | Key Attributes Evaluated |
-| :--- | :--- |
-| **Identity & Account** | Customer ID, email domain patterns, account age, KYC status |
-| **Device Fingerprint** | Device ID, canvas hash, browser user-agent, OS consistency |
-| **Network & Location** | IP address, subnet cluster, proxy/VPN flag, ASN, geo-velocity |
-| **Payment Instrument** | Card hash (BIN/last4), UPI VPA, billing address match, issuing bank |
-| **Velocity & Frequency** | Bursts per minute/hour, sliding window transaction counts |
-| **Amount & Pattern** | Structuring thresholds, round amounts, anomalous testing amounts |
-| **State Sequence** | Repeated rapid authorization failures followed by successes |
-
----
-
-## 5. Security & Architectural Guardrails
-
-1. **Decision-Support Constraint**:
-   - The platform is strictly an advisory and intelligence engine.
-   - It cannot execute unilateral, irreversible fund transfers or direct payment settlements.
-2. **Auditability by Design**:
-   - Every risk recommendation is accompanied by an explanation payload detailing the exact signals that triggered the evaluation.
-3. **Modularity & Decoupling**:
-   - The database, API endpoints, schema validation, and future clustering logic are isolated into discrete modules to enable parallel scaling and clean extensibility.
+1. **Strict Non-Action Constraint**:
+   - The platform is strictly an advisory, intelligence, and compliance review tool.
+   - It **never** triggers automated financial debiting, payment cancellation, or autonomous transaction blocking.
+2. **Immutability of Source Data**:
+   - Ingested transactions and evaluated assessment scores are immutable; case workflows and dispositions do not alter transaction execution states.
+3. **Auditability & Explainability**:
+   - Every risk recommendation is mathematically decomposable into its triggering detector findings.
+   - Every analyst case action is permanently recorded in the `case_audit_events` ledger.

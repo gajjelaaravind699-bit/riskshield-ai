@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { getAssessments, getAssessmentById, AssessmentRead } from "@/lib/api";
+import { getAssessments, getAssessmentById, createCaseFromAssessment, AssessmentRead } from "@/lib/api";
 import {
   Shield,
   RefreshCw,
@@ -15,13 +15,15 @@ import {
   Layers,
   Scale,
   Lock,
+  Briefcase,
 } from "lucide-react";
 
 interface AssessmentExplorerProps {
   refreshTrigger?: number;
+  onCaseCreated?: () => void;
 }
 
-export function AssessmentExplorer({ refreshTrigger = 0 }: AssessmentExplorerProps) {
+export function AssessmentExplorer({ refreshTrigger = 0, onCaseCreated }: AssessmentExplorerProps) {
   const [assessments, setAssessments] = useState<AssessmentRead[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
@@ -31,6 +33,8 @@ export function AssessmentExplorer({ refreshTrigger = 0 }: AssessmentExplorerPro
   const [riskLevelFilter, setRiskLevelFilter] = useState<string>("");
   const [selectedAssessment, setSelectedAssessment] = useState<AssessmentRead | null>(null);
   const [inspectLoading, setInspectLoading] = useState<boolean>(false);
+  const [escalating, setEscalating] = useState<boolean>(false);
+  const [escalateSuccess, setEscalateSuccess] = useState<string | null>(null);
 
   const fetchAssessmentsList = useCallback(async () => {
     setLoading(true);
@@ -58,6 +62,7 @@ export function AssessmentExplorer({ refreshTrigger = 0 }: AssessmentExplorerPro
 
   const handleInspect = async (assessmentId: string) => {
     setInspectLoading(true);
+    setEscalateSuccess(null);
     try {
       const details = await getAssessmentById(assessmentId);
       setSelectedAssessment(details);
@@ -65,6 +70,24 @@ export function AssessmentExplorer({ refreshTrigger = 0 }: AssessmentExplorerPro
       console.error(err);
     } finally {
       setInspectLoading(false);
+    }
+  };
+
+  const handleEscalateToCase = async (assessmentId: string) => {
+    setEscalating(true);
+    setEscalateSuccess(null);
+    try {
+      const created = await createCaseFromAssessment(assessmentId, {
+        actor: "lead_analyst",
+      });
+      setEscalateSuccess(`Case ${created.case_id} successfully created and queued!`);
+      if (onCaseCreated) {
+        onCaseCreated();
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to create case from assessment");
+    } finally {
+      setEscalating(false);
     }
   };
 
@@ -313,6 +336,14 @@ export function AssessmentExplorer({ refreshTrigger = 0 }: AssessmentExplorerPro
               </button>
             </div>
 
+            {/* Escalate Success Alert */}
+            {escalateSuccess && (
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-lg flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>{escalateSuccess}</span>
+              </div>
+            )}
+
             {/* Non-Action Execution Confirmation Banner */}
             <div className="p-3.5 rounded-lg bg-zinc-950 border border-emerald-500/30 space-y-2">
               <div className="flex items-center justify-between">
@@ -404,8 +435,18 @@ export function AssessmentExplorer({ refreshTrigger = 0 }: AssessmentExplorerPro
               </div>
             </div>
 
-            {/* Footer */}
-            <div className="flex justify-end pt-3 border-t border-zinc-800">
+            {/* Footer with Escalate to Case Action */}
+            <div className="flex items-center justify-between pt-3 border-t border-zinc-800">
+              <button
+                type="button"
+                onClick={() => handleEscalateToCase(selectedAssessment.assessment_id)}
+                disabled={escalating}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold disabled:opacity-50 transition-colors shadow-lg shadow-indigo-950/50 cursor-pointer"
+              >
+                <Briefcase className="w-3.5 h-3.5" />
+                <span>{escalating ? "Creating Case..." : "Escalate to Case Queue"}</span>
+              </button>
+
               <button
                 onClick={() => setSelectedAssessment(null)}
                 className="px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium transition-colors cursor-pointer"

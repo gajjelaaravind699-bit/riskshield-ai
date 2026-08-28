@@ -10,6 +10,7 @@ import { AnalysisControlCard } from "@/components/AnalysisControlCard";
 import { FindingsExplorer } from "@/components/FindingsExplorer";
 import { RiskAssessmentCard } from "@/components/RiskAssessmentCard";
 import { AssessmentExplorer } from "@/components/AssessmentExplorer";
+import { AnalystCaseQueue } from "@/components/AnalystCaseQueue";
 import {
   ShieldCheck,
   Radio,
@@ -20,12 +21,14 @@ import {
   Database,
   Network,
   Scale,
+  Briefcase,
 } from "lucide-react";
 
 export default function Home() {
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
   const [findingsTrigger, setFindingsTrigger] = useState<number>(0);
   const [assessmentTrigger, setAssessmentTrigger] = useState<number>(0);
+  const [caseTrigger, setCaseTrigger] = useState<number>(0);
 
   const handleTransactionIngested = () => {
     setRefreshTrigger((prev) => prev + 1);
@@ -39,6 +42,10 @@ export default function Home() {
     setAssessmentTrigger((prev) => prev + 1);
   };
 
+  const handleCaseCreated = () => {
+    setCaseTrigger((prev) => prev + 1);
+  };
+
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-zinc-950">
       <Header />
@@ -47,17 +54,17 @@ export default function Home() {
         {/* Hero & Sentinel Status Banner */}
         <section className="relative overflow-hidden rounded-2xl border border-zinc-800 bg-gradient-to-br from-zinc-900 via-zinc-950 to-zinc-900 p-8 shadow-2xl">
           <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-0 -mb-8 -ml-8 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 -mb-8 -ml-8 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
 
           <div className="relative z-10 space-y-4 max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-medium">
               <Radio className="w-3.5 h-3.5 animate-pulse" />
-              <span>Phase 4: Explainable Decision-Support & Risk Scoring Active</span>
+              <span>Phase 5: Human Analyst Case-Review & Audit Layer Active</span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl font-extrabold text-zinc-100 tracking-tight">
               RiskShield AI{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-200 to-sky-400">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-200 to-indigo-400">
                 Sentinel Console
               </span>
             </h1>
@@ -65,7 +72,7 @@ export default function Home() {
             <p className="text-sm sm:text-base text-zinc-400 leading-relaxed">
               Detect coordinated payment abuse across dispersed accounts, devices, and payment
               instruments. Evaluate deterministic bounded risk scores, rule contribution breakdowns,
-              and auditable decision-support recommendations (<code className="text-emerald-400">ALLOW</code> / <code className="text-amber-400">REVIEW</code> / <code className="text-rose-400">BLOCK</code>).
+              and manage human analyst investigation cases with append-only notes and immutable audit event trails.
             </p>
 
             <div className="flex flex-wrap gap-3 pt-2">
@@ -77,6 +84,14 @@ export default function Home() {
               >
                 <span>Interactive OpenAPI Docs</span>
                 <ArrowUpRight className="w-4 h-4" />
+              </a>
+
+              <a
+                href="#cases"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 font-medium text-xs transition-all"
+              >
+                <Briefcase className="w-4 h-4 text-indigo-400" />
+                <span>Analyst Cases</span>
               </a>
 
               <a
@@ -111,6 +126,11 @@ export default function Home() {
           <HealthStatus />
         </section>
 
+        {/* Phase 5: Analyst Investigation & Case Review Queue */}
+        <section id="cases">
+          <AnalystCaseQueue refreshTrigger={caseTrigger} />
+        </section>
+
         {/* Phase 4: Risk Assessment Trigger Control */}
         <section id="assessments">
           <RiskAssessmentCard onAssessmentComplete={handleAssessmentComplete} />
@@ -118,7 +138,7 @@ export default function Home() {
 
         {/* Phase 4: Explainable Assessments & Decision-Support Explorer */}
         <section>
-          <AssessmentExplorer refreshTrigger={assessmentTrigger} />
+          <AssessmentExplorer refreshTrigger={assessmentTrigger} onCaseCreated={handleCaseCreated} />
         </section>
 
         {/* Phase 3: Graph & Pattern Analysis Trigger Control */}
@@ -194,7 +214,7 @@ export default function Home() {
             <FileCode2 className="w-4 h-4 text-zinc-400" />
             <span>RiskShield AI — Decision-Support Abuse-Ring Sentinel</span>
           </div>
-          <div>Phase 4 Risk Scoring & Assessment Engine Active</div>
+          <div>Phase 5 Human Analyst Case-Review & Audit Layer Active</div>
         </div>
       </footer>
     </div>

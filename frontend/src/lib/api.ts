@@ -227,6 +227,99 @@ export interface AssessmentBatchResponse {
   items: AssessmentRead[];
 }
 
+// Phase 5: Analyst Case Management Types
+export interface CaseNoteRead {
+  id: number;
+  note_id: string;
+  author: string;
+  content: string;
+  created_at: string;
+}
+
+export interface CaseAuditEventRead {
+  id: number;
+  event_id: string;
+  event_type: string;
+  actor: string;
+  from_state?: string | null;
+  to_state?: string | null;
+  event_details: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface CaseRead {
+  id: number;
+  case_id: string;
+  title: string;
+  description?: string | null;
+  status: string;
+  priority: string;
+  assigned_to?: string | null;
+  transaction_id: number;
+  assessment_id?: number | null;
+  disposition?: string | null;
+  disposition_rationale?: string | null;
+  disposition_at?: string | null;
+  disposition_by?: string | null;
+  created_at: string;
+  updated_at: string;
+  transaction?: TransactionSummaryRead | null;
+  assessment?: AssessmentRead | null;
+  notes: CaseNoteRead[];
+  audit_events: CaseAuditEventRead[];
+}
+
+export interface CaseListResponse {
+  items: CaseRead[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface CaseCreateInput {
+  transaction_id: string;
+  title: string;
+  description?: string;
+  priority?: string;
+  assigned_to?: string;
+  actor?: string;
+}
+
+export interface CaseFromAssessmentInput {
+  title?: string;
+  description?: string;
+  priority?: string;
+  assigned_to?: string;
+  actor?: string;
+}
+
+export interface CaseStatusUpdateInput {
+  status: string;
+  actor: string;
+  reason?: string;
+}
+
+export interface CaseAssignmentUpdateInput {
+  assigned_to?: string | null;
+  actor: string;
+}
+
+export interface CasePriorityUpdateInput {
+  priority: string;
+  actor: string;
+}
+
+export interface CaseNoteCreateInput {
+  content: string;
+  author: string;
+}
+
+export interface CaseDispositionCreateInput {
+  disposition: string;
+  rationale: string;
+  actor: string;
+}
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -550,6 +643,209 @@ export async function getAssessmentByTransactionId(transactionId: string): Promi
 
   if (!response.ok) {
     throw new Error(`Failed to fetch assessment for transaction '${transactionId}' with status: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+// Phase 5: Analyst Case Management Methods
+
+/**
+ * Create a case manually.
+ */
+export async function createCase(payload: CaseCreateInput): Promise<CaseRead> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/cases`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: "Failed to create case" }));
+    throw new Error(errorData.detail || "Case creation failed");
+  }
+
+  return response.json();
+}
+
+/**
+ * Create a case directly from an assessment.
+ */
+export async function createCaseFromAssessment(
+  assessmentId: string,
+  payload?: CaseFromAssessmentInput
+): Promise<CaseRead> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/cases/from-assessment/${encodeURIComponent(assessmentId)}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload || {}),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: "Failed to create case from assessment" }));
+    throw new Error(errorData.detail || "Case creation from assessment failed");
+  }
+
+  return response.json();
+}
+
+/**
+ * Retrieve paginated list of cases in queue.
+ */
+export async function getCases(params?: {
+  skip?: number;
+  limit?: number;
+  status?: string;
+  priority?: string;
+  assigned_to?: string;
+  disposition?: string;
+  transaction_id?: string;
+}): Promise<CaseListResponse> {
+  const query = new URLSearchParams();
+  if (params?.skip !== undefined) query.set("skip", params.skip.toString());
+  if (params?.limit !== undefined) query.set("limit", params.limit.toString());
+  if (params?.status) query.set("status", params.status);
+  if (params?.priority) query.set("priority", params.priority);
+  if (params?.assigned_to) query.set("assigned_to", params.assigned_to);
+  if (params?.disposition) query.set("disposition", params.disposition);
+  if (params?.transaction_id) query.set("transaction_id", params.transaction_id);
+
+  const queryString = query.toString();
+  const url = `${API_BASE_URL}/api/v1/cases${queryString ? `?${queryString}` : ""}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch cases with status: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Retrieve a single case by ID with full notes and audit events.
+ */
+export async function getCaseById(caseId: string): Promise<CaseRead> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/cases/${encodeURIComponent(caseId)}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch case '${caseId}' with status: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Update case status.
+ */
+export async function updateCaseStatus(caseId: string, payload: CaseStatusUpdateInput): Promise<CaseRead> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/cases/${encodeURIComponent(caseId)}/status`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: "Status update failed" }));
+    throw new Error(errorData.detail || "Status update failed");
+  }
+
+  return response.json();
+}
+
+/**
+ * Update case assignment.
+ */
+export async function updateCaseAssignment(caseId: string, payload: CaseAssignmentUpdateInput): Promise<CaseRead> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/cases/${encodeURIComponent(caseId)}/assignment`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: "Assignment update failed" }));
+    throw new Error(errorData.detail || "Assignment update failed");
+  }
+
+  return response.json();
+}
+
+/**
+ * Update case priority.
+ */
+export async function updateCasePriority(caseId: string, payload: CasePriorityUpdateInput): Promise<CaseRead> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/cases/${encodeURIComponent(caseId)}/priority`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: "Priority update failed" }));
+    throw new Error(errorData.detail || "Priority update failed");
+  }
+
+  return response.json();
+}
+
+/**
+ * Append a note to a case.
+ */
+export async function addCaseNote(caseId: string, payload: CaseNoteCreateInput): Promise<CaseNoteRead> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/cases/${encodeURIComponent(caseId)}/notes`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: "Note creation failed" }));
+    throw new Error(errorData.detail || "Note creation failed");
+  }
+
+  return response.json();
+}
+
+/**
+ * Record analyst disposition.
+ */
+export async function recordCaseDisposition(caseId: string, payload: CaseDispositionCreateInput): Promise<CaseRead> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/cases/${encodeURIComponent(caseId)}/disposition`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: "Disposition recording failed" }));
+    throw new Error(errorData.detail || "Disposition recording failed");
   }
 
   return response.json();

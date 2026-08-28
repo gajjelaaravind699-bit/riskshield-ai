@@ -12,6 +12,15 @@ from app.models.finding import Finding, FindingType, FindingSeverity
 from app.models.finding_entity import FindingEntity
 from app.models.finding_transaction import FindingTransaction
 from app.models.assessment import Assessment, RiskLevel, Recommendation
+from app.models.case import (
+    Case,
+    CaseNote,
+    CaseAuditEvent,
+    CaseStatus,
+    CasePriority,
+    CaseDisposition,
+    CaseAuditEventType,
+)
 
 __all__ = [
     "Base",
@@ -31,4 +40,11 @@ __all__ = [
     "Assessment",
     "RiskLevel",
     "Recommendation",
+    "Case",
+    "CaseNote",
+    "CaseAuditEvent",
+    "CaseStatus",
+    "CasePriority",
+    "CaseDisposition",
+    "CaseAuditEventType",
 ]

@@ -32,6 +32,19 @@ from app.schemas.assessment import (
     AssessmentListResponse,
     AssessmentBatchResponse,
 )
+from app.schemas.case import (
+    CaseCreate,
+    CaseFromAssessmentCreate,
+    CaseStatusUpdate,
+    CaseAssignmentUpdate,
+    CasePriorityUpdate,
+    CaseNoteCreate,
+    CaseDispositionCreate,
+    CaseNoteRead,
+    CaseAuditEventRead,
+    CaseRead,
+    CaseListResponse,
+)
 
 __all__ = [
     "HealthResponse",
@@ -59,4 +72,15 @@ __all__ = [
     "AssessmentRead",
     "AssessmentListResponse",
     "AssessmentBatchResponse",
+    "CaseCreate",
+    "CaseFromAssessmentCreate",
+    "CaseStatusUpdate",
+    "CaseAssignmentUpdate",
+    "CasePriorityUpdate",
+    "CaseNoteCreate",
+    "CaseDispositionCreate",
+    "CaseNoteRead",
+    "CaseAuditEventRead",
+    "CaseRead",
+    "CaseListResponse",
 ]
